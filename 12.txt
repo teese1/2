@@ -1,0 +1,444 @@
+1.  Заход в визуал студио:
+cd (название проекта)
+
+dotnet add package Microsoft.EntityFrameworkCore --version 8.0.11
+dotnet add package Microsoft.EntityFrameworkCore.Tools --version 8.0.11
+dotnet add package Pomelo.EntityFrameworkCore.MySql --version 8.0.2
+
+dotnet tool install --global dotnet-ef
+dotnet add package Microsoft.EntityFrameworkCore.Design --version 8.0.11
+
+dotnet ef dbcontext scaffold "server=localhost;user=root;password=root;database=shoeshop" Pomelo.EntityFrameworkCore.MySql --context-dir DbContexts --output-dir Entities
+
+
+2.  создать папку Windows и кинуть туда Maim Window 
+переименовать Main Window на AuthorizationWindow (в XAML и XAML.CS и еще App.XAML)
+
+3.  Добавление стилей (styles.xaml)
+<Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Times New Roman"/>
+        <Setter Property="FontSize" Value="20"/>
+    </Style>
+    <Style TargetType="TextBox">
+        <Setter Property="FontFamily" Value="Times New Roman"/>
+        <Setter Property="FontSize" Value="20"/>
+    </Style>
+    <Style TargetType="ComboBox">
+        <Setter Property="FontFamily" Value="Times New Roman"/>
+        <Setter Property="FontSize" Value="20"/>
+    </Style>
+    <Style TargetType="PasswordBox">
+        <Setter Property="FontFamily" Value="Times New Roman"/>
+        <Setter Property="FontSize" Value="20"/>
+    </Style>
+
+    <Style TargetType="Button">
+        <Setter Property="FontFamily" Value="Times New Roman"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="Background" Value="#00FA9A"/>
+        <Setter Property="BorderBrush" Value="#00a897"/>
+    </Style>
+Добавить их в App.Xaml
+ <ResourceDictionary Source="/Styles.xaml"/>
+
+4.  Создать папку Images
+Сделать все файлы (ресурс)
+5.  Авторизация 
+Title="Авторизация" Height="350" Width="300" Icon="/Images/Icon.ico" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+
+<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Image Source="/Images/Icon.png" Width="50" Height="50"/>
+        <TextBlock Text="Авторизация"
+            Margin="40 5"/>
+        <TextBlock Text="Email"
+            HorizontalAlignment="Center"
+            Margin="20,5,20,1"/>
+        <TextBox x:Name="LoginEnter"/>
+        <TextBlock Text="Пароль"
+            HorizontalAlignment="Center"
+            Margin="20,5,20,1"/>
+        <PasswordBox x:Name="PasswordEnter"/>
+        <Button x:Name="LoginButton"
+            Content="Войти"
+            Margin="20,5,20,1"
+            Click="Button_Click"
+            Cursor="Hand"/>
+        <TextBlock Text="Войти как гоcть" 
+            Margin="20,5,20,5" 
+            Foreground="Blue" 
+            FontSize="15"
+            MouseLeftButtonUp="TextBlock_MouseLeftButtonUp"
+            Cursor="Hand"/>
+    </StackPanel>
+
+5.  Создать класс CurrentUser
+    public static class CurrentUser
+   
+
+    public static int Id { get; set; }
+    public static string FullName { get; set; }
+    public static string Role { get; set; }
+
+6.  Создать окно CatalogWindow
+
+
+
+
+
+
+7.  Логика Авторизации 
+private void LoginButton_Click(object sender, RoutedEventArgs e)
+{
+         
+    var email = LoginEnter.Text.Trim();
+    var passw = PasswordEnter.Password.Trim();
+
+    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(passw))
+    {
+        MessageBox.Show("Заполните все поля!");
+        return; 
+    }
+
+    using var db = new ShoeshopContext  ();
+
+    try
+    {
+        var user = db.Users
+            .Include(u => u.Role)
+            .FirstOrDefault(u => u.Email == email && u.Passw == passw);
+        if (user == null)
+        {
+            MessageBox.Show("Неверный Email или пароль!");
+            return;
+        }
+
+        CurrentUser.Id = user.IdUser;
+        CurrentUser.FullName = $"{user.MiddleName} {user.FirstName} {user.LastName}";
+        CurrentUser.Role = user.Role.RoleName;
+        OpenProdWin();
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show($"Ошибка при подключении к базе данных: {ex.Message}");
+    }
+}
+      
+private void OpenProdWin()
+{
+    CatalogWindow mn = new();
+    mn.Show();
+    Close();
+}
+
+private void TextBlock_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+{
+    CurrentUser.Id = 0;
+    CurrentUser.FullName = "Гость";
+    CurrentUser.Role = "Гость";
+    OpenProdWin();
+}
+
+
+
+
+
+
+8.  Создать папку Converters
+Туда засунуть 4 класса с названиями:
+ImagePathConverter
+SaleToBackgroundConverter
+CrossedPriceConverter
+FinalPriceConverter
+
+Добавить в Catalog путь
+xmlns:conv="clr-namespace:Demo.Converters"
+
+
+ImagePathConverter
+public class ImagePathConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null)
+        {
+            return "/Images/picture.png";
+        }
+
+        string imageName = value.ToString().Trim();
+
+        if (string.IsNullOrEmpty(imageName))
+        {
+            return "/Images/picture.png";
+        }
+        return $"/Images/{imageName}";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+SaleToBackgroundConverter
+public class SaleToBackgroundConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value != null && int.TryParse(value.ToString(), out int sale))
+        {
+            if (sale >= 15) return Brushes.LightGreen;
+        }
+        return Brushes.Transparent;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+CrossedPriceConverter
+public class CrossedPriceConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value != null && int.TryParse(value.ToString(), out int sale))
+        {
+            if (sale > 0)
+            {
+                return TextDecorations.Strikethrough;
+            }
+        }
+        return null;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+FinalPriceConverter
+public class FinalPriceConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is Product product)
+        {
+            decimal finalPrice = product.Price * (1 - (decimal)product.Sale / 100);
+            return $"{finalPrice:N0} руб.";
+        }
+        return "0 руб.";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+
+
+
+9.  Каталог
+<Window.Resources>
+    <conv:ImagePathConverter x:Key="ImagePathConverter" />
+    <conv:FinalPriceConverter x:Key="FinalPriceConverter" />
+    <conv:CrossedPriceConverter x:Key="CrossedPriceConverter" />
+    <conv:SaleToBackgroundConverter x:Key="SaleToBackgroundConverter" />
+
+    <Style x:Key="CardBorder" TargetType="Border">
+        <Setter Property="BorderBrush" Value="Black"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Margin" Value="10"/>
+        <Setter Property="Padding" Value="10"/>
+    </Style>
+
+    <Style TargetType="ListBoxItem">
+        <Setter Property="Background" Value="Transparent"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Count}" Value="0">
+                <Setter Property="Background" Value="LightBlue" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+</Window.Resources>
+
+
+
+
+<Grid>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0" Background="#FF7CFC00" Padding="10">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Image Source="/Resources/logo.png" Width="50" HorizontalAlignment="Left" Margin="15,0"/>
+            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                <TextBlock x:Name="UserNameTB" Text="ФИО Пользователя" FontWeight="Bold"/>
+                <Button x:Name="ExitBtn" Content="Выход" Cursor="Hand" Click="ExitBtn_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" x:Name="FilterGrid" Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0">
+            <TextBlock Text="Поиск"/>
+            <TextBox x:Name="SearchTB" TextChanged="SearchTB_TextChanged"/>
+        </StackPanel>
+
+        <ComboBox Grid.Column="1" x:Name="SupplierCB" Margin="10,15,10,0"
+              DisplayMemberPath="SupName" SelectedValuePath="IdSup" 
+              SelectionChanged="SupplierCB_SelectionChanged"/>
+
+        <ComboBox Grid.Column="2" x:Name="SortCB" Margin="10,15,10,0" 
+              SelectionChanged="SortCB_SelectionChanged">
+            <ComboBoxItem Content="Без сортировки" IsSelected="True"/>
+            <ComboBoxItem Content="По возрастанию (остаток)"/>
+            <ComboBoxItem Content="По убыванию (остаток)"/>
+        </ComboBox>
+    </Grid>
+
+    <ListBox Grid.Row="2" x:Name="ProductsLB" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+        <ListBox.ItemTemplate>
+            <DataTemplate>
+                <Border Style="{StaticResource CardBorder}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="500"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Image Source="{Binding Image, Converter={StaticResource ImagePathConverter}}" 
+                                Width="100" Height="100"/>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock FontWeight="Bold">
+                            <Run Text="{Binding Cat.CatName}"/> | <Run Text="{Binding ProdNameNavigation.ProdName1}"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Descrip, StringFormat='Описание: {0}'}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Manuf.ManufName, StringFormat='Производитель: {0}'}"/>
+                            <TextBlock Text="{Binding Sup.SupName, StringFormat='Поставщик: {0}'}"/>
+
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Converter={StaticResource FinalPriceConverter}}" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Price, StringFormat=' {0:N0} руб.'}" Foreground="Red" Margin="10,0"
+                                       TextDecorations="{Binding Sale, Converter={StaticResource CrossedPriceConverter}}"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Count, StringFormat='Количество на складе: {0}'}"/>
+                        </StackPanel>
+
+                        <Border Grid.Column="2" Background="{Binding Sale, Converter={StaticResource SaleToBackgroundConverter}}">
+                            <TextBlock Text="{Binding Sale, StringFormat='{}{0}%'}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
+    </ListBox>
+
+    <Grid Grid.Row="3" x:Name="AdminPanel" Visibility="Collapsed">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Button Grid.Column="0" Content="Добавить" Margin="5"/>
+        <Button Grid.Column="1" Content="Редактировать" Margin="5"/>
+        <Button Grid.Column="2" Content="Удалить" Margin="5"/>
+    </Grid>
+</Grid>
+
+
+
+
+
+
+
+
+
+
+10.  Логика Каталога
+public partial class CatalogWindow : Window
+{
+    public CatalogWindow()
+    {
+        InitializeComponent();
+        UserNameTB.Text = CurrentUser.FullName;
+
+        AdminPanel.Visibility = CurrentUser.Role == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
+
+        LoadSuppliers();
+        LoadProdData();
+    }
+
+    private void LoadSuppliers()
+    {
+        try
+        {
+            using var db = new ShoeshopContext ();
+            var suppliers = db.Suppliers.ToList();
+            suppliers.Insert(0, new Supplier { IdSup = 0, SupName = "Все поставщики" });
+
+            SupplierCB.ItemsSource = suppliers;
+            SupplierCB.SelectedIndex = 0;
+        }
+        catch (Exception ex) { MessageBox.Show(ex.Message); }
+    }
+
+    private void LoadProdData()
+    {
+        if (ProductsLB == null || SupplierCB == null || SortCB == null || SearchTB == null) return;
+
+        try
+        {
+            using var db = new ShoeshopContext ();
+            var query = db.Products
+                .Include(p => p.Cat)
+                .Include(p => p.Manuf)
+                .Include(p => p.Sup)
+                .Include(p => p.ProdNameNavigation)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(SearchTB.Text))
+            {
+                string text = SearchTB.Text.ToLower();
+                query = query.Where(p => p.Descrip.ToLower().Contains(text) ||
+                                       p.Cat.CatName.ToLower().Contains(text));
+            }
+
+            if (SupplierCB.SelectedValue is int supId && supId > 0)
+            {
+                query = query.Where(p => p.SupId == supId);
+            }
+
+            if (SortCB.SelectedIndex == 1) query = query.OrderBy(p => p.Count);
+            if (SortCB.SelectedIndex == 2) query = query.OrderByDescending(p => p.Count);
+
+            ProductsLB.ItemsSource = query.ToList();
+        }
+        catch (Exception ex) { MessageBox.Show(ex.Message); }
+    }
+
+    private void SearchTB_TextChanged(object sender, TextChangedEventArgs e) => LoadProdData();
+    private void SupplierCB_SelectionChanged(object sender, SelectionChangedEventArgs e) => LoadProdData();
+    private void SortCB_SelectionChanged(object sender, SelectionChangedEventArgs e) => LoadProdData();
+
+    private void ExitBtn_Click(object sender, RoutedEventArgs e)
+    {
+        new AuthorizationWindow ().Show();
+        this.Close();
+    }
+}
