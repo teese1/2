@@ -19,14 +19,17 @@ dotnet ef dbcontext scaffold "server=localhost;user=root;password=root;database=
         <Setter Property="FontFamily" Value="Times New Roman"/>
         <Setter Property="FontSize" Value="20"/>
     </Style>
+
     <Style TargetType="TextBox">
         <Setter Property="FontFamily" Value="Times New Roman"/>
         <Setter Property="FontSize" Value="20"/>
     </Style>
+
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="Times New Roman"/>
         <Setter Property="FontSize" Value="20"/>
     </Style>
+
     <Style TargetType="PasswordBox">
         <Setter Property="FontFamily" Value="Times New Roman"/>
         <Setter Property="FontSize" Value="20"/>
@@ -38,11 +41,13 @@ dotnet ef dbcontext scaffold "server=localhost;user=root;password=root;database=
         <Setter Property="Background" Value="#00FA9A"/>
         <Setter Property="BorderBrush" Value="#00a897"/>
     </Style>
+
 Добавить их в App.Xaml
  <ResourceDictionary Source="/Styles.xaml"/>
 
 4.  Создать папку Images
 Сделать все файлы (ресурс)
+
 5.  Авторизация 
 Title="Авторизация" Height="350" Width="300" Icon="/Images/Icon.ico" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
 
@@ -79,11 +84,8 @@ Title="Авторизация" Height="350" Width="300" Icon="/Images/Icon.ico" 
     public static string FullName { get; set; }
     public static string Role { get; set; }
 
+
 6.  Создать окно CatalogWindow
-
-
-
-
 
 
 7.  Логика Авторизации 
@@ -360,13 +362,6 @@ public class FinalPriceConverter : IValueConverter
         <Button Grid.Column="2" Content="Удалить" Margin="5"/>
     </Grid>
 </Grid>
-
-
-
-
-
-
-
 
 
 
